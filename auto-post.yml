@@ -1,0 +1,29 @@
+name: Auto Post Diário
+
+on:
+  schedule:
+    - cron: "0 9 * * *"  # 09:00 UTC = 08:00 Cabo Verde
+    - cron: "0 13 * * *" # 13:00 UTC = 12:00 Cabo Verde
+    - cron: "30 20 * * *" # 20:30 UTC = 19:30 Cabo Verde
+  workflow_dispatch:      # permite disparar manualmente pelo GitHub
+
+jobs:
+  auto-post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar auto-post
+        run: |
+          response=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X GET "https://www.blogdavid.cv/api/cron/auto-post" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+
+          body=$(cat /tmp/response.json)
+          echo "Status HTTP: $response"
+          echo "Resposta: $body"
+
+          if [ "$response" != "200" ] && [ "$response" != "201" ]; then
+            echo "❌ Falhou com status $response"
+            exit 1
+          fi
+
+          echo "✅ Auto-post concluído com sucesso"
